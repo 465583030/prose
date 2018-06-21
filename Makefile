@@ -63,4 +63,4 @@ setup:
 	gometalinter --install
 
 model:
-	go-bindata -ignore=\\.DS_Store -pkg="model" -o internal/model/model.go internal/model/*.gob
+	go-bindata -ignore=\\.DS_Store -pkg="prose" -o model.go data/*.gob

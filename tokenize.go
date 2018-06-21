@@ -5,11 +5,6 @@ import (
 	"strings"
 )
 
-type token struct {
-	text string
-	pos  string
-}
-
 // TreebankWordTokenizer splits a sentence into words.
 //
 // This implementation is a port of the Sed script written by Robert McIntyre,
@@ -113,7 +108,7 @@ func (t TreebankWordTokenizer) Tokenize(text string) []Token {
 
 	tokens := []Token{}
 	for _, tok := range strings.Split(text, " ") {
-		tokens = append(tokens, token{text: tok})
+		tokens = append(tokens, Token{Text: tok})
 	}
 
 	return tokens

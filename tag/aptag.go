@@ -25,8 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jdkato/prose/internal/model"
-	"github.com/jdkato/prose/internal/util"
 	"github.com/montanaflynn/stats"
 	"github.com/shogo82148/go-shuffle"
 )
@@ -66,14 +64,14 @@ func NewPerceptronTagger() *PerceptronTagger {
 	var tags map[string]string
 	var classes []string
 
-	dec := model.GetAsset("classes.gob")
-	util.CheckError(dec.Decode(&classes))
+	dec := GetAsset("classes.gob")
+	CheckError(dec.Decode(&classes))
 
-	dec = model.GetAsset("tags.gob")
-	util.CheckError(dec.Decode(&tags))
+	dec = GetAsset("tags.gob")
+	CheckError(dec.Decode(&tags))
 
-	dec = model.GetAsset("weights.gob")
-	util.CheckError(dec.Decode(&wts))
+	dec = GetAsset("weights.gob")
+	CheckError(dec.Decode(&wts))
 
 	return &PerceptronTagger{model: NewAveragedPerceptron(wts, tags, classes)}
 }
@@ -249,7 +247,7 @@ func (ap *AveragedPerceptron) updateFeat(c, f string, v, w float64) {
 }
 
 func (ap *AveragedPerceptron) addClass(class string) {
-	if !util.StringInSlice(class, ap.classes) {
+	if !StringInSlice(class, ap.classes) {
 		ap.classes = append(ap.classes, class)
 	}
 }
@@ -284,10 +282,10 @@ func max(scores map[string]float64) string {
 
 func featurize(i int, ctx []string, w, p1, p2 string) map[string]float64 {
 	feats := make(map[string]float64)
-	suf := util.Min(len(w), 3)
-	i = util.Min(len(ctx)-2, i+2)
-	iminus := util.Min(len(ctx[i-1]), 3)
-	iplus := util.Min(len(ctx[i+1]), 3)
+	suf := Min(len(w), 3)
+	i = Min(len(ctx)-2, i+2)
+	iminus := .Min(len(ctx[i-1]), 3)
+	iplus := Min(len(ctx[i+1]), 3)
 	feats = add([]string{"bias"}, feats)
 	feats = add([]string{"i suffix", w[len(w)-suf:]}, feats)
 	feats = add([]string{"i pref1", string(w[0])}, feats)
