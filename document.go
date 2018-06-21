@@ -5,7 +5,6 @@ type Component func(*Pipline)
 
 // Pipline ...
 type Pipline struct {
-	Segment   bool
 	Summarize bool
 	Tag       bool
 	Tokenize  bool
@@ -14,14 +13,8 @@ type Pipline struct {
 // WithTokenization ...
 func WithTokenization(include bool) Component {
 	return func(pipe *Pipline) {
-		pipe.Tokenize = include
-	}
-}
-
-// WithSegmentation ...
-func WithSegmentation(include bool) Component {
-	return func(pipe *Pipline) {
-		pipe.Segment = include
+		// Tagging and summarization both require tokenization.
+		pipe.Tokenize = include || pipe.Tag || pipe.Summarize
 	}
 }
 
@@ -29,6 +22,13 @@ func WithSegmentation(include bool) Component {
 func WithTagging(include bool) Component {
 	return func(pipe *Pipline) {
 		pipe.Tag = include
+	}
+}
+
+// WithSummarization ...
+func WithSummarization(include bool) Component {
+	return func(pipe *Pipline) {
+		pipe.Summarize = include
 	}
 }
 
@@ -40,9 +40,9 @@ type Document struct {
 }
 
 var defaultPipeline = Pipline{
-	Tokenize: true,
-	Segment:  true,
-	Tag:      true,
+	Tokenize:  true,
+	Tag:       true,
+	Summarize: false,
 }
 
 // NewDocument ...
@@ -54,14 +54,13 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 		applyComponent(&base)
 	}
 
-	doc := Document{Text: text}
-	if base.Tokenize || base.Tag {
+	segmenter := NewPunktSentenceTokenizer()
+	doc := Document{Text: text, Sentences: segmenter.Segment(text)}
+	if base.Tokenize {
 		tokenizer := NewTreebankWordTokenizer()
-		doc.Tokens = tokenizer.Tokenize(text)
-	}
-	if base.Segment {
-		segmenter := NewPunktSentenceTokenizer()
-		doc.Sentences = segmenter.Segment(text)
+		for _, sent := range doc.Sentences {
+			doc.Tokens = append(doc.Tokens, tokenizer.Tokenize(sent.Text)...)
+		}
 	}
 	if base.Tag {
 		tagger := NewPerceptronTagger()
@@ -69,4 +68,24 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 	}
 
 	return &doc, pipeError
+}
+
+// MatchString ...
+func (doc *Document) MatchString(query string) []string {
+	return []string{}
+}
+
+// People ...
+func (doc *Document) People(query string) []string {
+	return []string{}
+}
+
+// Places ...
+func (doc *Document) Places(query string) []string {
+	return []string{}
+}
+
+// Organizations ...
+func (doc *Document) Organizations(query string) []string {
+	return []string{}
 }
