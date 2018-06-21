@@ -25,8 +25,8 @@ func WithSegmentation(include bool) Component {
 	}
 }
 
-// WithPOSTagging ...
-func WithPOSTagging(include bool) Component {
+// WithTagging ...
+func WithTagging(include bool) Component {
 	return func(pipe *Pipline) {
 		pipe.Tag = include
 	}

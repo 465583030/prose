@@ -8,34 +8,34 @@ import (
 	"strings"
 )
 
-// ReadDataFile reads data from a file, panicking on any errors.
-func ReadDataFile(path string) []byte {
+// readDataFile reads data from a file, panicking on any errors.
+func readDataFile(path string) []byte {
 	p, err := filepath.Abs(path)
-	CheckError(err)
+	checkError(err)
 
 	data, ferr := ioutil.ReadFile(p)
-	CheckError(ferr)
+	checkError(ferr)
 
 	return data
 }
 
-// CheckError panics if `err` is not `nil`.
-func CheckError(err error) {
+// checkError panics if `err` is not `nil`.
+func checkError(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-// Min returns the minimum of `a` and `b`.
-func Min(a, b int) int {
+// min returns the minimum of `a` and `b`.
+func min(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-// IsPunct determines if a character is a punctuation symbol.
-func IsPunct(c byte) bool {
+// isPunct determines if a character is a punctuation symbol.
+func isPunct(c byte) bool {
 	for _, r := range []byte("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") {
 		if c == r {
 			return true
@@ -44,8 +44,8 @@ func IsPunct(c byte) bool {
 	return false
 }
 
-// IsSpace determines if a character is a whitespace character.
-func IsSpace(c byte) bool {
+// isSpace determines if a character is a whitespace character.
+func isSpace(c byte) bool {
 	for _, r := range []byte("\t\n\r\f\v") {
 		if c == r {
 			return true
@@ -54,18 +54,18 @@ func IsSpace(c byte) bool {
 	return false
 }
 
-// IsLetter determines if a character is letter.
-func IsLetter(c byte) bool {
+// isLetter determines if a character is letter.
+func isLetter(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
 
-// IsAlnum determines if a character is a letter or a digit.
-func IsAlnum(c byte) bool {
-	return (c >= '0' && c <= '9') || IsLetter(c)
+// isAlnum determines if a character is a letter or a digit.
+func isAlnum(c byte) bool {
+	return (c >= '0' && c <= '9') || isLetter(c)
 }
 
-// StringInSlice determines if `slice` contains the string `a`.
-func StringInSlice(a string, slice []string) bool {
+// stringInSlice determines if `slice` contains the string `a`.
+func stringInSlice(a string, slice []string) bool {
 	for _, b := range slice {
 		if a == b {
 			return true
@@ -74,9 +74,9 @@ func StringInSlice(a string, slice []string) bool {
 	return false
 }
 
-// HasAnySuffix determines if the string a has any suffixes contained in the
+// hasAnySuffix determines if the string a has any suffixes contained in the
 // slice b.
-func HasAnySuffix(a string, slice []string) bool {
+func hasAnySuffix(a string, slice []string) bool {
 	for _, b := range slice {
 		if strings.HasSuffix(a, b) {
 			return true
@@ -85,9 +85,9 @@ func HasAnySuffix(a string, slice []string) bool {
 	return false
 }
 
-// ContainsAny determines if the string a contains any fo the strings contained
+// containsAny determines if the string a contains any fo the strings contained
 // in the slice b.
-func ContainsAny(a string, b []string) bool {
+func containsAny(a string, b []string) bool {
 	for _, s := range b {
 		if strings.Contains(a, s) {
 			return true
@@ -96,9 +96,9 @@ func ContainsAny(a string, b []string) bool {
 	return false
 }
 
-// GetAsset returns the named Asset.
-func GetAsset(name string) *gob.Decoder {
-	b, err := Asset("model/" + name)
-	CheckError(err)
+// getAsset returns the named Asset.
+func getAsset(name string) *gob.Decoder {
+	b, err := Asset("data/" + name)
+	checkError(err)
 	return gob.NewDecoder(bytes.NewReader(b))
 }

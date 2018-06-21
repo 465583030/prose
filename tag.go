@@ -25,11 +25,34 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jdkato/prose/internal/model"
-	"github.com/jdkato/prose/internal/util"
 	"github.com/montanaflynn/stats"
 	"github.com/shogo82148/go-shuffle"
 )
+
+// TupleSlice is a slice of tuples in the form (words, tags).
+type TupleSlice [][][]string
+
+// Len returns the length of a Tuple.
+func (t TupleSlice) Len() int { return len(t) }
+
+// Swap switches the ith and jth elements in a Tuple.
+func (t TupleSlice) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+
+// ReadTagged converts pre-tagged input into a TupleSlice suitable for training.
+func ReadTagged(text, sep string) TupleSlice {
+	t := TupleSlice{}
+	for _, sent := range strings.Split(text, "\n") {
+		tokens := []string{}
+		tags := []string{}
+		for _, token := range strings.Split(sent, " ") {
+			parts := strings.Split(token, sep)
+			tokens = append(tokens, parts[0])
+			tags = append(tags, parts[1])
+		}
+		t = append(t, [][]string{tokens, tags})
+	}
+	return t
+}
 
 var none = regexp.MustCompile(`^(?:0|\*[\w?]\*|\*\-\d{1,3}|\*[A-Z]+\*\-\d{1,3}|\*)$`)
 var keep = regexp.MustCompile(`^\-[A-Z]{3}\-$`)
@@ -66,14 +89,14 @@ func NewPerceptronTagger() *PerceptronTagger {
 	var tags map[string]string
 	var classes []string
 
-	dec := model.GetAsset("classes.gob")
-	util.CheckError(dec.Decode(&classes))
+	dec := getAsset("classes.gob")
+	checkError(dec.Decode(&classes))
 
-	dec = model.GetAsset("tags.gob")
-	util.CheckError(dec.Decode(&tags))
+	dec = getAsset("tags.gob")
+	checkError(dec.Decode(&tags))
 
-	dec = model.GetAsset("weights.gob")
-	util.CheckError(dec.Decode(&wts))
+	dec = getAsset("weights.gob")
+	checkError(dec.Decode(&wts))
 
 	return &PerceptronTagger{model: NewAveragedPerceptron(wts, tags, classes)}
 }
@@ -118,7 +141,8 @@ func NewTrainedPerceptronTagger(model *AveragedPerceptron) *PerceptronTagger {
 
 // Tag takes a slice of words and returns a slice of tagged tokens.
 func (pt *PerceptronTagger) Tag(tokens []Token) []Token {
-	var clean []Token
+	var clean []string
+	var tagged []Token
 	var tag string
 	var found bool
 
@@ -129,23 +153,23 @@ func (pt *PerceptronTagger) Tag(tokens []Token) []Token {
 			continue
 		}
 		context = append(context, normalize(t.Text))
-		clean = append(clean, t)
+		clean = append(clean, t.Text)
 	}
 	context = append(context, []string{"-END-", "-END2-"}...)
-	for i, token := range clean {
-		word := token.Text
+	for i, word := range clean {
 		if none.MatchString(word) {
-			token.Tag = "-NONE-"
+			tag = "-NONE-"
 		} else if keep.MatchString(word) {
-			token.Tag = word
+			tag = word
 		} else if tag, found = pt.model.tagMap[word]; !found {
-			token.Tag = pt.model.predict(featurize(i, context, word, p1, p2))
+			tag = pt.model.predict(featurize(i, context, word, p1, p2))
 		}
+		tagged = append(tagged, Token{Text: word, Tag: tag})
 		p2 = p1
 		p1 = tag
 	}
 
-	return tokens
+	return tagged
 }
 
 // Train an Averaged Perceptron model based on sentences.
@@ -248,7 +272,7 @@ func (ap *AveragedPerceptron) updateFeat(c, f string, v, w float64) {
 }
 
 func (ap *AveragedPerceptron) addClass(class string) {
-	if !util.StringInSlice(class, ap.classes) {
+	if !stringInSlice(class, ap.classes) {
 		ap.classes = append(ap.classes, class)
 	}
 }
@@ -283,10 +307,10 @@ func max(scores map[string]float64) string {
 
 func featurize(i int, ctx []string, w, p1, p2 string) map[string]float64 {
 	feats := make(map[string]float64)
-	suf := util.Min(len(w), 3)
-	i = util.Min(len(ctx)-2, i+2)
-	iminus := util.Min(len(ctx[i-1]), 3)
-	iplus := util.Min(len(ctx[i+1]), 3)
+	suf := min(len(w), 3)
+	i = min(len(ctx)-2, i+2)
+	iminus := min(len(ctx[i-1]), 3)
+	iplus := min(len(ctx[i+1]), 3)
 	feats = add([]string{"bias"}, feats)
 	feats = add([]string{"i suffix", w[len(w)-suf:]}, feats)
 	feats = add([]string{"i pref1", string(w[0])}, feats)

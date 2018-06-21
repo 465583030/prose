@@ -42,7 +42,7 @@ func NewPunktSentenceTokenizer() *PunktSentenceTokenizer {
 	var err error
 
 	pt.tokenizer, err = newSentenceTokenizer(nil)
-	CheckError(err)
+	checkError(err)
 
 	return &pt
 }
