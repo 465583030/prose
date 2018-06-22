@@ -1,7 +1,6 @@
 package prose
 
 import (
-	"fmt"
 	"regexp"
 )
 
@@ -27,7 +26,7 @@ func quadsString(tagged []Token) string {
 		}
 		tagQuads += pos + padding
 	}
-	fmt.Println(tagQuads)
+
 	return tagQuads
 }
 
