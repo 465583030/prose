@@ -1,51 +1,53 @@
 package prose
 
-// Component ...
+// A Component represents a stage in the Document pipeline.
 type Component func(*Pipline)
 
-// Pipline ...
+// Pipline controls the Document creation process:
 type Pipline struct {
-	Summarize bool
+	EntityMap map[string]string
+	Extract   bool
 	Tag       bool
 	Tokenize  bool
 }
 
-// WithTokenization ...
+// WithTokenization can enable (the default) or disable tokenization.
 func WithTokenization(include bool) Component {
 	return func(pipe *Pipline) {
-		// Tagging and summarization both require tokenization.
-		pipe.Tokenize = include || pipe.Tag || pipe.Summarize
+		// Tagging and entity extraction both require tokenization.
+		pipe.Tokenize = include || pipe.Tag || pipe.Extract
 	}
 }
 
-// WithTagging ...
+// WithTagging can enable (the default) or disable POS tagging.
 func WithTagging(include bool) Component {
 	return func(pipe *Pipline) {
 		pipe.Tag = include
 	}
 }
 
-// WithSummarization ...
-func WithSummarization(include bool) Component {
+// WithExtraction can enable (the default) or disable named-entity extraction.
+func WithExtraction(include bool) Component {
 	return func(pipe *Pipline) {
-		pipe.Summarize = include
+		pipe.Extract = include
 	}
 }
 
-// Document ...
+// A Document represents a parsed body of text.
 type Document struct {
 	Text      string
 	Tokens    []Token
 	Sentences []Sentence
+	Entities  []string // TODO: Use more fine-grained labels -- e.g., ORG, etc.
 }
 
 var defaultPipeline = Pipline{
-	Tokenize:  true,
-	Tag:       true,
-	Summarize: false,
+	Tokenize: true,
+	Tag:      true,
+	Extract:  true,
 }
 
-// NewDocument ...
+// NewDocument creates a Document according to the user-specified pipeline.
 func NewDocument(text string, pipeline ...Component) (*Document, error) {
 	var pipeError error
 
@@ -66,26 +68,11 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 		tagger := NewPerceptronTagger()
 		doc.Tokens = tagger.Tag(doc.Tokens)
 	}
+	if base.Extract {
+		for _, ent := range Chunk(doc.Tokens, TreebankNamedEntities) {
+			doc.Entities = append(doc.Entities, ent)
+		}
+	}
 
 	return &doc, pipeError
-}
-
-// MatchString ...
-func (doc *Document) MatchString(query string) []string {
-	return []string{}
-}
-
-// People ...
-func (doc *Document) People(query string) []string {
-	return []string{}
-}
-
-// Places ...
-func (doc *Document) Places(query string) []string {
-	return []string{}
-}
-
-// Organizations ...
-func (doc *Document) Organizations(query string) []string {
-	return []string{}
 }
