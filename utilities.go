@@ -3,8 +3,11 @@ package prose
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"io/ioutil"
+	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -32,6 +35,12 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// isPunct determines if the string represents a number.
+func isNumeric(s string) bool {
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
 }
 
 // isPunct determines if a character is a punctuation symbol.
@@ -97,8 +106,14 @@ func containsAny(a string, b []string) bool {
 }
 
 // getAsset returns the named Asset.
-func getAsset(name string) *gob.Decoder {
-	b, err := Asset("data/" + name)
+func getJSONAsset(folder, name string) *json.Decoder {
+	b, err := Asset(path.Join("data", folder, name))
+	checkError(err)
+	return json.NewDecoder(bytes.NewReader(b))
+}
+
+func getGobAsset(folder, name string) *gob.Decoder {
+	b, err := Asset(path.Join("data", folder, name))
 	checkError(err)
 	return gob.NewDecoder(bytes.NewReader(b))
 }

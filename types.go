@@ -2,8 +2,9 @@ package prose
 
 // Token ...
 type Token struct {
-	Tag  string
-	Text string
+	Tag   string
+	Text  string
+	Label string
 }
 
 // Sentence ...

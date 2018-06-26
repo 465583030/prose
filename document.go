@@ -69,9 +69,8 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 		doc.Tokens = tagger.Tag(doc.Tokens)
 	}
 	if base.Extract {
-		for _, ent := range Chunk(doc.Tokens, TreebankNamedEntities) {
-			doc.Entities = append(doc.Entities, ent)
-		}
+		classifier := NewEntityExtracter()
+		doc.Tokens = classifier.Classify(doc.Tokens)
 	}
 
 	return &doc, pipeError
