@@ -67,6 +67,7 @@ func (e *EntityExtracter) Classify(tokens []Token) []Token {
 	for i, tok := range tokens {
 		scores := make(map[string]float64)
 		features := extract(i, tokens, history, e.classifier.Words)
+		//fmt.Println("Looking", features)
 		for _, label := range e.classifier.Labels {
 			total := 0.0
 			for id, val := range e.Encode(features, label) {
@@ -76,7 +77,7 @@ func (e *EntityExtracter) Classify(tokens []Token) []Token {
 		}
 		label := max(scores)
 		labeled = append(labeled, Token{tok.Tag, tok.Text, label})
-		history = append(history, label)
+		history = append(history, simplePOS(label))
 	}
 
 	return labeled
@@ -152,6 +153,7 @@ func extract(i int, ctx []Token, history, vocab []string) map[string]string {
 	feats := make(map[string]string)
 
 	word := ctx[i].Text
+	prevShape := "None"
 
 	feats["bias"] = "True"
 	feats["word"] = word
@@ -172,19 +174,20 @@ func extract(i int, ctx []Token, history, vocab []string) map[string]string {
 		feats["prevword"], feats["prevpos"] = "None", "None"
 	} else if i == 1 {
 		feats["prevword"] = strings.ToLower(ctx[i-1].Text)
-		feats["prevpos"] = simplePOS(ctx[i-1].Tag)
+		feats["prevpos"] = ctx[i-1].Tag
 		feats["prevtag"] = history[i-1]
 	} else {
 		feats["prevword"] = strings.ToLower(ctx[i-1].Text)
-		feats["prevpos"] = simplePOS(ctx[i-1].Tag)
+		feats["prevpos"] = ctx[i-1].Tag
 		feats["prevtag"] = history[i-1]
+		prevShape = shape(ctx[i-1].Text)
 	}
 
 	if i == len(ctx)-1 {
 		feats["nextword"], feats["nextpos"] = "None", "None"
 	} else {
 		feats["nextword"] = strings.ToLower(ctx[i+1].Text)
-		feats["nextpos"] = simplePOS(ctx[i+1].Tag)
+		feats["nextpos"] = strings.ToLower(ctx[i+1].Tag)
 	}
 
 	feats["word+nextpos"] = strings.Join(
@@ -192,7 +195,7 @@ func extract(i int, ctx []Token, history, vocab []string) map[string]string {
 	feats["pos+prevtag"] = strings.Join(
 		[]string{feats["pos"], feats["prevtag"]}, "+")
 	feats["shape+prevtag"] = strings.Join(
-		[]string{feats["shape"], feats["prevtag"]}, "+")
+		[]string{prevShape, feats["prevtag"]}, "+")
 
 	return feats
 }
@@ -205,7 +208,7 @@ func shape(word string) string {
 	} else if match, _ := regexp.MatchString(`\w+$`, word); match {
 		if strings.ToLower(word) == word {
 			return "downcase"
-		} else if strings.ToTitle(word) == word {
+		} else if strings.Title(word) == word {
 			return "upcase"
 		} else {
 			return "mixedcase"
@@ -218,5 +221,5 @@ func simplePOS(pos string) string {
 	if strings.HasPrefix(pos, "V") {
 		return "v"
 	}
-	return strings.ToLower(strings.Split(pos, "-")[0])
+	return strings.Split(pos, "-")[0]
 }
