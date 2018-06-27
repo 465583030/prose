@@ -26,8 +26,8 @@ func WithTagging(include bool) Component {
 	}
 }
 
-// WithExtraction can enable (the default) or disable named-entity extraction.
-func WithExtraction(include bool) Component {
+// WithNER can enable (the default) or disable named-entity extraction.
+func WithNER(include bool) Component {
 	return func(pipe *Pipline) {
 		pipe.Extract = include
 	}
@@ -38,7 +38,7 @@ type Document struct {
 	Text      string
 	Tokens    []Token
 	Sentences []Sentence
-	Entities  []string // TODO: Use more fine-grained labels -- e.g., ORG, etc.
+	Entities  []Entity
 }
 
 var defaultPipeline = Pipline{
@@ -71,6 +71,7 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 	if base.Extract {
 		classifier := NewEntityExtracter()
 		doc.Tokens = classifier.Classify(doc.Tokens)
+		doc.Entities = classifier.Chunk(doc.Tokens)
 	}
 
 	return &doc, pipeError
