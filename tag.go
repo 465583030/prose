@@ -89,13 +89,13 @@ func NewPerceptronTagger() *PerceptronTagger {
 	var tags map[string]string
 	var classes []string
 
-	dec := getGobAsset("AveragedPerceptron", "classes.gob")
+	dec := getAsset("AveragedPerceptron", "classes.gob")
 	checkError(dec.Decode(&classes))
 
-	dec = getGobAsset("AveragedPerceptron", "tags.gob")
+	dec = getAsset("AveragedPerceptron", "tags.gob")
 	checkError(dec.Decode(&tags))
 
-	dec = getGobAsset("AveragedPerceptron", "weights.gob")
+	dec = getAsset("AveragedPerceptron", "weights.gob")
 	checkError(dec.Decode(&wts))
 
 	return &PerceptronTagger{model: NewAveragedPerceptron(wts, tags, classes)}

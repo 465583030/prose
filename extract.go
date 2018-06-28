@@ -31,16 +31,16 @@ func NewEntityExtracter() *EntityExtracter {
 	var labels []string
 	var words []string
 
-	dec := getJSONAsset("Maxent", "mapping.json")
+	dec := getAsset("Maxent", "mapping.gob")
 	checkError(dec.Decode(&mapping))
 
-	dec = getJSONAsset("Maxent", "weights.json")
+	dec = getAsset("Maxent", "weights.gob")
 	checkError(dec.Decode(&weights))
 
-	dec = getJSONAsset("Maxent", "words.json")
+	dec = getAsset("Maxent", "words.gob")
 	checkError(dec.Decode(&words))
 
-	dec = getJSONAsset("Maxent", "labels.json")
+	dec = getAsset("Maxent", "labels.gob")
 	checkError(dec.Decode(&labels))
 
 	return &EntityExtracter{classifier: NewMaxentClassifier(weights, mapping, labels, words)}
@@ -95,7 +95,6 @@ func (e *EntityExtracter) Encode(features map[string]string, label string) map[i
 	for key, val := range features {
 		entry := strings.Join([]string{key, val, label}, "-")
 		if _, found := e.classifier.Mapping[entry]; found {
-			//fmt.Println("found", e.classifier.Mapping[entry])
 			encoding[e.classifier.Mapping[entry]] = 1
 		}
 	}

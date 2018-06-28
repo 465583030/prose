@@ -3,7 +3,6 @@ package prose
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -105,15 +104,8 @@ func containsAny(a string, b []string) bool {
 	return false
 }
 
-// getAsset returns the named Asset.
-func getJSONAsset(folder, name string) *json.Decoder {
-	b, err := Asset(path.Join("data", folder, name))
-	checkError(err)
-	return json.NewDecoder(bytes.NewReader(b))
-}
-
-func getGobAsset(folder, name string) *gob.Decoder {
-	b, err := Asset(path.Join("data", folder, name))
+func getAsset(folder, name string) *gob.Decoder {
+	b, err := Asset(path.Join("model", folder, name))
 	checkError(err)
 	return gob.NewDecoder(bytes.NewReader(b))
 }

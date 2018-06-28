@@ -5,10 +5,10 @@ type Component func(*Pipline)
 
 // Pipline controls the Document creation process:
 type Pipline struct {
-	EntityMap map[string]string
-	Extract   bool
-	Tag       bool
-	Tokenize  bool
+	Extract  bool
+	Model    string
+	Tag      bool
+	Tokenize bool
 }
 
 // WithTokenization can enable (the default) or disable tokenization.
@@ -30,6 +30,18 @@ func WithTagging(include bool) Component {
 func WithNER(include bool) Component {
 	return func(pipe *Pipline) {
 		pipe.Extract = include
+	}
+}
+
+// UsingModel ...
+//
+// en-v2.0.0
+//
+// doc.Model.Tagger.Train(), doc.Model.Marshal("name")
+func UsingModel(path string) Component {
+	return func(pipe *Pipline) {
+		// load model from disk ...
+		pipe.Model = path
 	}
 }
 
@@ -58,6 +70,13 @@ func NewDocument(text string, pipeline ...Component) (*Document, error) {
 
 	segmenter := NewPunktSentenceTokenizer()
 	doc := Document{Text: text, Sentences: segmenter.Segment(text)}
+
+	if base.Model != "" {
+		// We've found a custom model.
+	} else {
+		// Load the default model.
+	}
+
 	if base.Tokenize {
 		tokenizer := NewTreebankWordTokenizer()
 		for _, sent := range doc.Sentences {
