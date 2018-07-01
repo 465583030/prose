@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -108,4 +109,10 @@ func getAsset(folder, name string) *gob.Decoder {
 	b, err := Asset(path.Join("model", folder, name))
 	checkError(err)
 	return gob.NewDecoder(bytes.NewReader(b))
+}
+
+func getDiskAsset(path string) *gob.Decoder {
+	f, err := os.Open(path)
+	checkError(err)
+	return gob.NewDecoder(f)
 }

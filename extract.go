@@ -1,6 +1,9 @@
 package prose
 
 import (
+	"encoding/gob"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,9 +22,29 @@ func NewMaxentClassifier(weights []float64, mapping map[string]int, labels, word
 	return &MaxentClassifier{labels, words, mapping, weights}
 }
 
+// Marshal ...
+func (m *MaxentClassifier) Marshal(path string) error {
+	folder := filepath.Join(path, "Maxent")
+	err := os.Mkdir(folder, os.ModePerm)
+	for i, entry := range []string{"labels", "mapping", "weights", "words"} {
+		component, _ := os.Create(filepath.Join(folder, entry+".gob"))
+		encoder := gob.NewEncoder(component)
+		if i == 0 {
+			encoder.Encode(m.Labels)
+		} else if i == 1 {
+			encoder.Encode(m.Mapping)
+		} else if i == 2 {
+			encoder.Encode(m.Weights)
+		} else {
+			encoder.Encode(m.Words)
+		}
+	}
+	return err
+}
+
 // EntityExtracter ...
 type EntityExtracter struct {
-	classifier *MaxentClassifier
+	model *MaxentClassifier
 }
 
 // NewEntityExtracter ...
@@ -43,7 +66,13 @@ func NewEntityExtracter() *EntityExtracter {
 	dec = getAsset("Maxent", "labels.gob")
 	checkError(dec.Decode(&labels))
 
-	return &EntityExtracter{classifier: NewMaxentClassifier(weights, mapping, labels, words)}
+	return &EntityExtracter{model: NewMaxentClassifier(weights, mapping, labels, words)}
+}
+
+// NewTrainedEntityExtracter creates a new EntityExtracter using the given
+// model.
+func NewTrainedEntityExtracter(model *MaxentClassifier) *EntityExtracter {
+	return &EntityExtracter{model: model}
 }
 
 // Chunk ...
@@ -94,8 +123,8 @@ func (e *EntityExtracter) Encode(features map[string]string, label string) map[i
 	encoding := make(map[int]int)
 	for key, val := range features {
 		entry := strings.Join([]string{key, val, label}, "-")
-		if _, found := e.classifier.Mapping[entry]; found {
-			encoding[e.classifier.Mapping[entry]] = 1
+		if _, found := e.model.Mapping[entry]; found {
+			encoding[e.model.Mapping[entry]] = 1
 		}
 	}
 	return encoding
@@ -108,12 +137,12 @@ func (e *EntityExtracter) Classify(tokens []Token) []Token {
 
 	for i, tok := range tokens {
 		scores := make(map[string]float64)
-		features := extract(i, tokens, history, e.classifier.Words)
+		features := extract(i, tokens, history, e.model.Words)
 		//fmt.Println("Looking", features)
-		for _, label := range e.classifier.Labels {
+		for _, label := range e.model.Labels {
 			total := 0.0
 			for id, val := range e.Encode(features, label) {
-				total += e.classifier.Weights[id] * float64(val)
+				total += e.model.Weights[id] * float64(val)
 			}
 			scores[label] = total
 		}

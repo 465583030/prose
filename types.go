@@ -1,5 +1,9 @@
 package prose
 
+import (
+	"os"
+)
+
 // Token ...
 type Token struct {
 	Tag   string
@@ -17,4 +21,18 @@ type Entity struct {
 type Sentence struct {
 	Text   string // the actual text
 	Length int    // the number of words
+}
+
+// Model ...
+type Model struct {
+	Tagger     *PerceptronTagger
+	Classifier *EntityExtracter
+}
+
+// Marshal ...
+func (m *Model) Marshal(path string) error {
+	err := os.MkdirAll(path, os.ModePerm)
+	m.Tagger.model.Marshal(path)
+	m.Classifier.model.Marshal(path)
+	return err
 }

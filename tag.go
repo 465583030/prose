@@ -21,6 +21,9 @@
 package prose
 
 import (
+	"encoding/gob"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -73,6 +76,24 @@ func NewAveragedPerceptron(weights map[string]map[string]float64,
 	return &AveragedPerceptron{
 		totals: make(map[string]float64), stamps: make(map[string]float64),
 		classes: classes, tagMap: tags, weights: weights}
+}
+
+// Marshal ...
+func (m *AveragedPerceptron) Marshal(path string) error {
+	folder := filepath.Join(path, "AveragedPerceptron")
+	err := os.Mkdir(folder, os.ModePerm)
+	for i, entry := range []string{"weights", "tags", "classes"} {
+		component, _ := os.Create(filepath.Join(folder, entry+".gob"))
+		encoder := gob.NewEncoder(component)
+		if i == 0 {
+			encoder.Encode(m.weights)
+		} else if i == 1 {
+			encoder.Encode(m.tagMap)
+		} else {
+			encoder.Encode(m.classes)
+		}
+	}
+	return err
 }
 
 // PerceptronTagger is a port of Textblob's "fast and accurate" POS tagger.
